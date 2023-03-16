@@ -57,6 +57,9 @@ public class FileUploaderClient {
                 byte[] buffer = new byte[4096];
                 float filesize = file.length();
                 float chunks = filesize / (float) buffer.length;
+                if (chunks < 1.0F) {
+                    chunks = 1.0F;
+                }
 
                 int bytesRead;
                 int chunkIndex = 0;
