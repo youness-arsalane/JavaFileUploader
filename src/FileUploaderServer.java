@@ -1,5 +1,6 @@
 import java.io.*;
-import java.net.*;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 public class FileUploaderServer {
     static final int PORT = 5656;
@@ -60,8 +61,19 @@ public class FileUploaderServer {
 
             try {
                 filename = (String) objectInputStream.readObject();
+
+                File file = new File(filePath + filename);
+                if (file.exists() && file.isFile()) {
+                    objectOutputStream.writeObject("FileExists");
+                    System.out.println("Kon bestand '" + filename + "' niet uploaden omdat deze al bestaat.");
+                    Thread.sleep(100);
+                    throw new IOException();
+                }
+
+                objectOutputStream.writeObject("FileNotExists");
+
                 long filesize = (long) objectInputStream.readObject();
-                System.out.println("Nieuw bestand wordt geüpload: " + filename + " (Bestandsgrootte: " + filesize + " bytes)");
+                System.out.println("Nieuw bestand wordt geüpload: '" + filename + "' (Bestandsgrootte: " + filesize + " bytes).");
 
                 byte[] buffer = new byte[4096];
                 int bytesRead;
@@ -74,10 +86,12 @@ public class FileUploaderServer {
                 }
 
                 fileOutputStream.close();
-                System.out.println("Bestand succesvol ontvangen!");
 
-            } catch (IOException | ClassNotFoundException e) {
-                System.err.println("Verbinding verbroken met client");
+                System.out.println("Bestand '" + filename + "' succesvol ontvangen!");
+
+            } catch (IOException | ClassNotFoundException | InterruptedException e) {
+                System.out.println(e.getMessage());
+                System.err.println("Verbinding verbroken met client: " + this.socket.getInetAddress().getHostAddress());
                 if (filename != null && fileOutputStream != null) {
                     try {
                         fileOutputStream.close();

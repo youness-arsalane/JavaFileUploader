@@ -1,5 +1,5 @@
 import java.io.*;
-import java.net.*;
+import java.net.Socket;
 
 public class FileUploaderClient {
     static final int PORT = 5656;
@@ -47,11 +47,16 @@ public class FileUploaderClient {
 
                 File file = new File(filePath);
                 if (!file.exists() || !file.isFile()) {
-                    System.err.println("Bestand kon niet gevonden worden");
-                    System.exit(-1);
+                    throw new Exception("Bestand kon niet gevonden worden.");
                 }
 
                 objectOutputStream.writeObject(file.getName());
+
+                String fileValidationOutput = (String)objectInputStream.readObject();
+                if (fileValidationOutput.equals("FileExists")) {
+                    throw new Exception("Het bestand bestaat al op de server.");
+                }
+
                 objectOutputStream.writeObject(file.length());
 
                 byte[] buffer = new byte[4096];
@@ -83,6 +88,9 @@ public class FileUploaderClient {
                 System.out.println("Bestand succesvol verzonden!");
             } catch (IOException e) {
                 System.err.println("Kon geen verbinding maken met " + socket.getInetAddress().getHostName() + ":" + PORT);
+                System.exit(-1);
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
                 System.exit(-1);
             }
         }
